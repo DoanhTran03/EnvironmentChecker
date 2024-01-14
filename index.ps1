@@ -5,7 +5,6 @@ $Export = [System.Collections.ArrayList]@()
 foreach ($Server in $ServerList) {
     $ServerName = $Server.Name
     $LastStatus = $Server.LastStatus
-    $DownSince = $Server.DownSince
 
     $Connection = Test-Connection $Server.Name -Count 1
     $Time = Get-Date
@@ -13,18 +12,25 @@ foreach ($Server in $ServerList) {
     if ($Connection.Status -eq "Success") {
         if ($LastStatus -eq "Success") {
             Write-Host "$ServerName is still online"
+            $Server.OnFor = ((Get-Date -Date $Time) - (Get-Date -Date $Server.OnSince)).Minutes
+            $OnFor = $Server.OnFor
+            if ($Server.OnFor -ge 180) {
+                Write-Output "The Computer has been running for $OnFor"
+            }
         }
         else {
             Write-Host "$ServerName is now online"
+            $Server.OnSince = $Time
         }
     }
-    else {
+    else 
+    {
         if ($LastStatus -eq "Success") {
             Write-Host "$ServerName is now offline"
-            $Server.DownSince = $Time
         }
     }
     $Server.LastStatus = $Connection.Status
+    $Server.LastCheckIn = $Time
     [void]$Export.Add($Server)
 }
 $Export | Export-Csv -Path $ServerList_Path -Delimiter ',' -NoTypeInformation
