@@ -4,8 +4,11 @@ $Export = [System.Collections.ArrayList]@()
 
 foreach ($Server in $ServerList) {
     $ServerName = $Server.Name
-    $LastStatus = $Server.$LastStatus
+    $LastStatus = $Server.LastStatus
+    $DownSince = $Server.DownSince
+
     $Connection = Test-Connection $Server.Name -Count 1
+    $Time = Get-Date
 
     if ($Connection.Status -eq "Success") {
         if ($LastStatus -eq "Success") {
@@ -18,9 +21,10 @@ foreach ($Server in $ServerList) {
     else {
         if ($LastStatus -eq "Success") {
             Write-Host "$ServerName is now offline"
+            $Server.DownSince = $Time
         }
     }
     $Server.LastStatus = $Connection.Status
-    $Export.Add($Server)
+    [void]$Export.Add($Server)
 }
-$Export | Export-Csv -Path .\ServerList.csv -Delimiter ','
+$Export | Export-Csv -Path $ServerList_Path -Delimiter ',' -NoTypeInformation
