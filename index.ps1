@@ -8,13 +8,19 @@ foreach ($Server in $ServerList) {
     $Connection = Test-Connection $Server.Name -Count 1
 
     if ($Connection.Status -eq "Success") {
-        Write-Host "$ServerName is online"
-        $Server.LastStatus = $LastStatus
+        if ($LastStatus -eq "Success") {
+            Write-Host "$ServerName is still online"
+        }
+        else {
+            Write-Host "$ServerName is now online"
+        }
     }
     else {
-        Write-Host "$ServerName is offline"
-        $Server.LastStatus = $LastStatus
+        if ($LastStatus -eq "Success") {
+            Write-Host "$ServerName is now offline"
+        }
     }
+    $Server.LastStatus = $Connection.Status
     $Export.Add($Server)
 }
 $Export | Export-Csv -Path .\ServerList.csv -Delimiter ','
