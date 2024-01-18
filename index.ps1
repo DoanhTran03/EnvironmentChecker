@@ -8,6 +8,9 @@ foreach ($Server in $ServerList) {
 
     $Connection = Test-Connection $Server.Name -Count 1
     $Time = Get-Date
+    $Alert = $false
+    $Subject = ""
+    $Body = ""
 
     if ($Connection.Status -eq "Success") {
         if ($LastStatus -eq "Success") {
@@ -16,13 +19,17 @@ foreach ($Server in $ServerList) {
             $LastAlertFor = ((Get-Date -Date $Time) - (Get-Date -Date $Server.LastOnAlert)).Minutes
             $OnFor = $Server.OnFor
             if (($Server.OnFor -ge 1) -and ($LastAlertFor -ge 2)) {
-                Write-Output "The Computer has been running for $OnFor minutes"
-                Write-Output "It is no on alert for $LastAlertFor minutes"
+                $Alert = $true
+                $Subject = "Computer $ServerName Running Time Alert"
+                $Body = "<h3>The Computer has been running for $OnFor minutes</h3>
+                        <br>It is no on alert for $LastAlertFor minutes"
                 $Server.LastOnAlert = $Time
             }
         }
         else {
-            Write-Host "$ServerName is now online"
+            $Alert = $true
+            $Subject = "Computer $ServerName Online Alert"
+            $Body = "<h3>Computer $ServerName is now online</h3>"
             $Server.OnSince = $Time
             $Server.LastOnAlert = $Time
         }
@@ -30,9 +37,12 @@ foreach ($Server in $ServerList) {
     else 
     {
         if ($LastStatus -eq "Success") {
-            Write-Host "$ServerName is now offline"
+            $Alert = $true
+            $Subject = "Computer $ServerName Offline Alert"
+            $Body = "<h3>Computer $ServerName is now offline</h3>"
         }
     }
+
     $Server.LastStatus = $Connection.Status
     $Server.LastCheckIn = $Time
     [void]$Export.Add($Server)
